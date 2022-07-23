@@ -7,7 +7,6 @@ class MyDocument extends Document {
         <Head>
         </Head>
         <body>
-          <canvas id="bg"></canvas>
         	<Main />
           <NextScript />
         </body>
