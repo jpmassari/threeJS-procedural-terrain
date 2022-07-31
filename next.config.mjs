@@ -12,4 +12,7 @@ function defineNextConfig(config) {
 
 export default defineNextConfig({
   reactStrictMode: true,
+  compiler: {
+    styledComponents: true
+  }
 });
