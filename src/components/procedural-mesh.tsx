@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import * as THREE from 'three';
+
+
 import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise';
 
 import { MeshContainer } from './procedural-mesh-loader';
@@ -9,8 +11,8 @@ import { useEffectOnce } from './hooks/UseEffectOnce';
 let cols = 0;
 let rows = 0;
 const scale = 20;
-const w = 1200;
-const h = 800;
+const w = 120;
+const h = 80;
 let terrain:any[] = [];
 let flying = 0;
 let count = 0;
@@ -36,6 +38,11 @@ const ProceduralMesh: React.FC = () => {
     }
   }, [renderer])
 
+/*   const generatePlane = () => {
+    geometry.geometry.dispose()
+    geometry.geometry = new THREE.PlaneGeometry()
+  }  
+ */
 /* eslint-disable react-hooks/exhaustive-deps */
   useEffectOnce(() => {
     const { current: container } = refContainer;
@@ -46,9 +53,7 @@ const ProceduralMesh: React.FC = () => {
     if(container && !renderer) {
       const scW = container.clientWidth;
       const scH = container.clientHeight;
-/*       flying -= 0.1;
-      let yoff = flying;
-      const perlin = new ImprovedNoise(), z = Math.random() * 100; */
+
       const renderer = new THREE.WebGLRenderer({ antialias: true })
       renderer.setPixelRatio(window.devicePixelRatio);
       renderer.setSize(scW, scH);
@@ -58,24 +63,34 @@ const ProceduralMesh: React.FC = () => {
       setRenderer(renderer);
 
       const camera = new THREE.PerspectiveCamera(75, scW / scH, 0.1, 1000);
-      camera.position.setZ(30);
- /*      const camera = new THREE.PerspectiveCamera( 60, scW / scH, 0.1, 100 );
+      camera.position.setZ(300);
+      /*      
+      const camera = new THREE.PerspectiveCamera( 60, scW / scH, 0.1, 100 );
 			camera.position.set( 10 * 0.9, 10 * 0.9, 10 * 0.9 );
       camera.position.setZ(2);
-			camera.lookAt( 0, 0, 0 ); */
+			camera.lookAt( 0, 0, 0 ); 
+      */
       setCamera(camera);
 
       const disposeArray = () => null
       
-      /* geometry.translate(-w/2 , -h/2, 1) */
       const material = new THREE.MeshBasicMaterial({
         color: 0xFF6347, 
-        wireframe: false
+        wireframe: true
       });
+
+      let v3 = new THREE.Vector3();
+      let v2 = new THREE.Vector2();
+      
+      const geometry = new THREE.PlaneGeometry( w, h, cols, rows );
+      /* geometry.rotateX(-Math.PI *0.5); */
+      geometry.rotateX(Math.PI/3)
+      const mesh = new THREE.Mesh( geometry, material );
+      scene.add( mesh );
       /* const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff }); */
-      for(let y = 0; y < rows; y++) {
+  /*     for(let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
-          const geometry = new THREE.BufferGeometry();
+          
           geometry.rotateX(Math.PI/2);
           const vertices = new Float32Array([
             -x*scale, -y*scale, 1.0,
@@ -88,12 +103,10 @@ const ProceduralMesh: React.FC = () => {
           ])
           geometry.setAttribute( 'position', new THREE.BufferAttribute(vertices, 3, false).onUpload(disposeArray));
           const mesh = new THREE.Mesh( geometry, material );
-    /*       const edges = new THREE.EdgesGeometry( geometry );
-          const line = new THREE.LineSegments( edges, lineMaterial ); */
           scene.add( mesh );
         }
-      } 
-      
+      }  */
+
     /*   const geometry = new THREE.PlaneGeometry( w, h, cols, rows );
       geometry.rotateX(Math.PI / 3);
       const vertices = geometry.attributes.position?.array; */
@@ -119,12 +132,35 @@ const ProceduralMesh: React.FC = () => {
       const animate = () => {
         req = requestAnimationFrame(animate);
         renderer.render(scene, camera);
+        const perlin = new ImprovedNoise(), z = Math.random() * 100;
+        frame += 0.1;
+        flying -= 0.1;
+        let yoff = flying;
+        for(let y = 0; y < rows; y++) {
+          terrain.push([]);
+          let xoff = 0;
+          for(let x = 0; x < cols; x++) {
+            terrain[y][x] = map_range(perlin.noise(xoff,yoff, z), 0, 5, -100, 100);
+            xoff += 0.2;
+          }
+          yoff += 0.2;
+        }
+        if(geometry.attributes.position) {
+          for(let y = 0; y < rows - 1; y++) {
+            for(let x = 0; x < cols; x++) {
+              geometry.attributes.position.setY(x, terrain[y][x]);
+            }
+          }
+          geometry.computeVertexNormals();
+          geometry.attributes.position.needsUpdate = true;
+        }
       }
       animate();
       return () => {
         console.log('unmount');
         cancelAnimationFrame(req as number);
         renderer.dispose();
+
       }
     }
   });
