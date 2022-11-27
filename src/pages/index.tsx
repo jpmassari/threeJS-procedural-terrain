@@ -6,7 +6,10 @@ const LazyProceduralMesh = dynamic(() => import('../components/procedural-mesh')
   ssr: false,
   suspense: true,
 })
-
+const LazyProceduralMesh2 = dynamic(() => import('../components/procedural-mesh-2'), { //future performance TEST: try without lazy loading
+  ssr: false,
+  suspense: true,
+})
 const LazyPerformanceUI = dynamic(() => import('../components/PerformanceUI'), {
   ssr: false,
   suspense: true,
